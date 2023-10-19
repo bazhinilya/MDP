@@ -78,16 +78,17 @@ Pr_T = fabs(p_T - n_T - na1 - na2)
 graph.print(T_range, Pr_T, log = True, xlabel = nameof(T_range), title = "Проверка условия электронейтральности")
 
 # 8. Оценка уровня Ферми
-Na_T = p_T
-Ef_T = const.k * T_range * log(Nv_T/Na_T) + Ev_T
-graph.print(T_range, F_T, T_range, Ef_T, xlabel = nameof(T_range), ylabel = nameof(F_T, Ef_T), title = "Оценка уровня Ферми", log = True)
-
-#TODO: Значения уходят в некорректный диапазон, проверить формулы и параметры
+Ef_T = Fi_T - const.k*T_range*log((const.Na1 + const.Na2)/ni_T)
+#Аналитический Ef
+Ef_T_altr = const.k * T_range * log(Nv_T/p_T) + Ev_T
+graph.print(T_range, F_T, T_range, Ef_T, T_range, Ef_T_altr, 
+            xlabel = nameof(T_range), 
+            ylabel = nameof(F_T, Ef_T_altr, Ef_T), 
+            title = "Оценка уровня Ферми", 
+            log = True)
 
 # 9. Работа выхода полупроводника
-#TODO: psi=const ?
-psi = 4.59
-Fs = psi + Ec_T[0] - F_T[0]
+Fs = const.psi + Ec_T[0] - F_T[0]
 print("Работа выхода пп = ", Fs)
 
 # 10. Напряжение плоских зон
@@ -95,27 +96,23 @@ Vfb = const.Fm - Fs
 print("Напряжение плоских зон", Vfb)
 
 # 11. Зависимость удельного поверхностного заряда от поверхностного потенциала
-fis = arange(-1, 1, 0.001)
-
+fis = arange(-0.65, 1, 0.001)
 def f_fis(fis):
-    return const.fiT * p_T[0] * (exp(-fis/const.fiT) - 1) + const.fiT * n_T[0] * (exp(fis/const.fiT) - 1) + fis * (Na_T[0])
+    return const.fiT * p_T[0] * (exp(-fis/const.fiT) - 1) + const.fiT * n_T[0] * (exp(fis/const.fiT) - 1) + fis * (p_T[0])
 def Qs_fis(fis):
-    return -sign(fis) * (2 * const.q * const.Es * const.E0 * f_fis(fis))**(1/2)
-graph.print(fis, Qs_fis(fis))
+    return -sign(fis) * (2 * const.q * const.Es * const.ε0 * f_fis(fis))**(1/2)
+graph.print(fis, Qs_fis(fis), xlabel = nameof(fis), ylabel = nameof(Qs_fis))
 
 # 12. Зависимость поверхностного потенциала ψs от напряжения затвор — подложка Vgb
-Coxp = const.Eox * const.E0 / const.tox
+Coxp = const.Eox * const.ε0 / const.tox
 def SPE(fis, Vgb):
     return Vfb + fis - Qs_fis(fis) / Coxp - Vgb
 
 Vgb = linspace(SPE(Ev_T[0] - F_T[0], 0), SPE(Ec_T[0] - F_T[0], 0), 201)
 fis = array([])
-
 for item in Vgb:
     fis = hstack((fis, bisect(SPE, a = Ev_T[0] - F_T[0] - 0.2, b = Ec_T[0] - F_T[0] + 0.2, args = item, xtol = 1e-12)))
-graph.print(Vgb, fis)
-#TODO: отметить значения напряжения плоских зон
+graph.print(Vgb, fis, xlabel = nameof(Vgb), ylabel = nameof(fis), xline = Vfb, yline_min = fis.min(), yline_max = fis.max())
 
 # 13. Зависимость поверхностного заряда от напряжения затвор — подложка
-graph.print(Vgb, Qs_fis(fis))
-#TODO: отметить значения напряжения плоских зон
+graph.print(Vgb, Qs_fis(fis), xlabel = nameof(Vgb), ylabel = nameof(Qs_fis), xline = Vfb, yline_min = -5e-7, yline_max = 3.5e-6)
