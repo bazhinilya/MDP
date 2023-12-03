@@ -1,45 +1,24 @@
 import math as mth
 import matplotlib.pyplot as plt
 import numpy as np
-import sympy as sym
 import scipy as sci
 from scipy.optimize import bisect
 from scipy.integrate import quad
-from Graphic import graphics as graph
 
 materialName = "InSb"
 Tmax = 400
 Tmin = 70
-Nd1 = 0
-Nd2 = 0 
-Ed1 = 0
-Ed2 = 0
 
 Na1 = 1e10
 Na2 = 1e12
 Ea1 = 0.05
 Ea2 = 0.1
 
-Nt = 1e14
-σn = 1e-14
-σp = 1e-16
-Et = 0.08
-S = 2.5e4
-h = 0.05
-a = 0.3
-l = 0.6
-λ = 1.8e-4
-Ps = 0.2
-R = 0.36
-α = 2e4
-Fm = 4.25
-
 Eg0 = 0.235
 bt = 650
 at  = 4e-4
 eps = 17.7
-Cl = 8.1e10
-Eact = 20
+
 k = 8.62e-5
 m0 = 9.11e-31
 mp = 0.18
@@ -152,36 +131,34 @@ Vfb = workMe - WorkOut
 # print(Vfb," напряжение плоских зон полупроводника при 300K")
 
 #Расчет зависимости удельного поверхностного заряда от поверхностного потенциала
-fsFunc = lambda fis: (0.026*p[T300]*(np.exp(-(fis / 0.026)) - 1)) + (0.026*n[T300]*(np.exp(fis/0.026) - 1)) + (fis * (na1[T300]+na2[T300]))
-QsFunc = lambda fis: (-np.sign(fis) * ((2 * -q * eps*eps0* fsFunc(fis)) ** (1 / 2)))
+f_Ψs = lambda Ψs: 0.026 * p[T300] * (np.exp(-Ψs/0.026) - 1) + 0.026 * n[T300] * (np.exp(Ψs/0.026) - 1) + Ψs * (Na1+Na2)
+QsFunc = lambda Ψs: (-np.sign(Ψs) * ((2 * -q * eps*eps0* f_Ψs(Ψs)) ** (1 / 2)))
 
-fisArray = np.arange(-0.3, 0.3, 2 * (0.3/T_range.size))
-fs = fsFunc(fisArray)
-Qs = QsFunc(fisArray)
+Ψs_range = np.arange(-0.3, 0.3, 2 * (0.3/T_range.size))
+fs = f_Ψs(Ψs_range)
+Qs = QsFunc(Ψs_range)
 
-# graph.print(fisArray, Qs, title = 'Поверхностный заряд')
+# graph.print(Ψs_range, Qs, title = 'Поверхностный заряд')
 
 #Расчет зависимости поверхностного потенциала ψs от напряжения затвор—подложка Vgb, используя численные методы.
 Coxp = epsOx * eps0 / tox
-SPE = lambda fisNew, Vgb: Vfb+fisNew - QsFunc(fisNew) / Coxp - Vgb
+SPE = lambda ΨsNew, Vgb: Vfb+ΨsNew - QsFunc(ΨsNew) / Coxp - Vgb
 Vgb = np.linspace(SPE(Ev[T300] - F[T300] - 0.181, 0), SPE(Ec[T300] - F[T300] + 0.28, 0), 331)
 
-fisss = np.array([])
-anew=Ev[T300]-F[T300]-0.181
-bnew=Ec[T300]-F[T300]+0.28
+Ψs = np.array([])
 for val in Vgb:
-    fisss = np.hstack((fisss, bisect(f=SPE,a=anew,b=bnew, args=val, xtol=1e-12)))
+    Ψs = np.hstack((Ψs, bisect(f = SPE, a = Ev[T300] - F[T300] - 0.181, b = Ec[T300]-F[T300]+0.28, args = val, xtol = 1e-12)))
 
 # plt.xlabel("Vgb, В")
 # plt.ylabel("Ψs, эВ")
 # plt.title('Поверхностный потенциал')
-# plt.plot(Vgb,fisss, label = 'Vgb');
+# plt.plot(Vgb,Ψs, label = 'Vgb');
 # plt.axvline(x=Vfb,color='red', label = 'Vfb')
 # plt.axvline(x=SPE(Ev[T300]-F[T300]-0.181,0),color='green', label = 'SPE(Ev-F)')
 # plt.axvline(x=SPE(Ec[T300]-F[T300]+0.28,0),color='yellow', label = 'SPE(Ec-F)')
 # plt.show()
 
-Qnew = (fisss + Vfb - Vgb) * Coxp
+Qnew = (Ψs + Vfb - Vgb) * Coxp
 
 # plt.xlabel("Vgb, В")
 # plt.ylabel("Qs, Кл/см^2")
@@ -197,77 +174,63 @@ print('{---------------------------------Третья часть----------------
 qpos = -q
 
 #Пункт 1
-nfis = lambda fisss: n[T300] * np.exp(fisss / 0.026)
-pfis = lambda fisss: p[T300] * np.exp(-fisss / 0.026)
-Efis = lambda fisss: np.sign(fisss) * np.sqrt(2 * (qpos) * fsFunc(fisss)/ (eps*eps0))
+n_Ψs = lambda Ψs: n[T300] * np.exp(Ψs / 0.026)
+p_Ψs = lambda Ψs: p[T300] * np.exp(-Ψs / 0.026)
+E_Ψs = lambda Ψs: np.sign(Ψs) * np.sqrt(2 * (qpos) * f_Ψs(Ψs)/ (eps*eps0))
 
-Ifis = lambda fisss: 1 - np.abs(np.sign(fisss))
+I_Ψs = lambda Ψs: 1 - np.abs(np.sign(Ψs))
 Sp = lambda f, ep: (f + np.sqrt(f**2 + 4 * ep**2)) / 2
 Sn = lambda f, ep: (f - np.sqrt(f**2 + 4 * ep**2)) / 2
 
-integr_inv =  lambda fisss: (qpos * n[T300] * (np.exp(fisss/0.026) - 1))/((np.sign(fisss) * np.sqrt(2 * (qpos) * fsFunc(fisss)/ (eps*eps0)))+Ifis(fisss))
-integr_bulk =  lambda fisss: (-qpos * p[T300] * (np.exp(-fisss/0.026) - 1))/((np.sign(fisss) * np.sqrt(2 * (qpos) * fsFunc(fisss)/ (eps*eps0)))+Ifis(fisss))
+integr_inv =  lambda Ψs: (qpos * n[T300] * (np.exp(Ψs/0.026) - 1))/((np.sign(Ψs) * np.sqrt(2 * (qpos) * f_Ψs(Ψs)/ (eps*eps0)))+I_Ψs(Ψs))
+integr_bulk =  lambda Ψs: (-qpos * p[T300] * (np.exp(-Ψs/0.026) - 1))/((np.sign(Ψs) * np.sqrt(2 * (qpos) * f_Ψs(Ψs)/ (eps*eps0))) + I_Ψs(Ψs))
 
-Qi = np.array([])
 Qi = np.zeros(331) 
-Qb = np.array([])
 Qb = np.zeros(331)
 
 for i in range(331):
-    result_i, error = quad(integr_inv, fisss[i], 0)
-    Qi[i] = Sn(result_i, 1e-14)
+    result_i, error = quad(integr_inv, Ψs[i], 0)
+    Qi[i] = Sn(result_i, 1e-11)
 
 for i in range(331):
-    result_i, error = quad(integr_bulk, fisss[i], 0)
-    Qb[i]= Sp(result_i, 1e-14)
+    result_i, error = quad(integr_bulk, Ψs[i], 0)
+    Qb[i] = result_i
+    # Sp(result_i, 1e-11)
 
 plt.xlabel("Vgb, В")
 plt.ylabel("Qi, Кл")
 plt.title('Заряд в инверсном слое')
-plt.plot(Vgb, Qi)
-plt.axvline(x=Vfb,color='red', label = 'Vfb')
+plt.plot(Vgb, np.abs(Qi))
+plt.axvline(x = Vfb,color='red', label = 'Vfb')
+plt.semilogy()
 plt.show()
 
 plt.xlabel("Vgb, В")
 plt.ylabel("Qb, Кл")
 plt.title('Заряд в Толщине полупроводника')
-plt.plot(Vgb, Qb)
-plt.axvline(x=Vfb,color='red', label = 'Vfb')
+plt.plot(Vgb, np.abs(Qb))
+plt.axvline(x = Vfb, color = 'red', label = 'Vfb')
+plt.semilogy()
 plt.show()
 
 plt.xlabel("Vgb, В")
 plt.ylabel("Qs, Кл/см^2")
 plt.title('Поверхностный заряд')
-plt.plot(Vgb, Qb+Qi, 'x',  label = 'Qb+Qi - расчет численными методами')
+plt.plot(Vgb, Qb + Qi, 'x',  label = 'Qb+Qi - расчет численными методами')
 plt.plot(Vgb, Qnew, label = 'Qs - расчет из второй части РЗ')
-plt.axvline(x=Vfb,color='red', label = 'Vfb');
+plt.axvline(x = Vfb, color = 'red', label = 'Vfb')
 plt.show()
 
 #Пункт 2
-# возможно ошибка в экспоненте, проверить к преподавателя или использовать сглаживающие функции
-# стоял + и все работало, стоит минус и все перестало работать, поэтому поставил модуль.
-# QbA = lambda fisss: -np.sign(fisss) * np.sqrt(2 * qpos * (eps * eps0)  * fA(fisss)) - для копирования
-fA = lambda fisss: fisss * (Na1+Na2) + 0.026 * p[T300] * (np.exp(-fisss/0.026) - 1)
-QbA = lambda fisss: -np.sign(fisss) * np.sqrt(Sp(2 * qpos * (eps * eps0)  * fA(fisss), 1e-20))
-QiA = lambda fisss: 2 * (qpos) * (eps*eps0) * 0.026 * n[T300] * (np.exp(fisss / 0.026) - 1) /(Qnew + QbA(fisss)+ Ifis(fisss))
+fA_Ψs = lambda Ψs: 0.026 * p[T300] * (np.exp(-Ψs/0.026) - 1) + Ψs * (Na1 + Na2)
+QbA = lambda Ψs: -np.sign(Ψs) * np.sqrt(2 * qpos * (eps * eps0) * fA_Ψs(Ψs))
+QiA = lambda Ψs: 2 * (qpos) * (eps * eps0) * 0.026 * n[T300] * (np.exp(Ψs / 0.026) - 1) /(Qnew + QbA(Ψs)+ I_Ψs(Ψs))
+print(np.exp(-Ψs/0.026) - 1)
 
-QbA_mas = np.array([])
-QbA_mas = np.zeros(331)
-QbA_mas = QbA(fisss)
+QiA_mas = QiA(Ψs)
+QbA_mas = QbA(Ψs)
 
-QiA_mas = np.array([])
-QiA_mas = np.zeros(331)
-QiA_mas = QiA(fisss)
-
-plt.xlabel("Vgb, В")
-plt.ylabel("QbA, Кл/см^2")
-plt.title('Заряд в толще полупроводника аналитически')
-plt.plot(Vgb, QbA_mas, '*', label = 'QbA - аналитически')
-plt.plot(Vgb, Qb, '-', color = 'r', label = 'Qb - численно')
-plt.axvline(x=Vfb,color='green', label = 'Vfb')
-plt.semilogy()
-plt.show()
-
+#TODO: поднять красную
 plt.xlabel("Vgb, В")
 plt.ylabel("QiA, Кл/см^2")
 plt.title('Заряд в инверсном аналитически')
@@ -275,7 +238,17 @@ plt.plot(Vgb, np.abs(QiA_mas), '*', label = 'QiA - аналитически')
 plt.plot(Vgb, np.abs(Qi),'-', color = 'r', label = 'Qi - численно')
 plt.legend()
 plt.semilogy()
-plt.axvline(x=Vfb,color='green', label = 'Vfb')
+plt.axvline(x = Vfb, color = 'green', label = 'Vfb')
+plt.show()
+
+plt.xlabel("Vgb, В")
+plt.ylabel("QbA, Кл/см^2")
+plt.title('Заряд в толще полупроводника аналитически')
+plt.plot(Vgb, np.abs(QbA_mas), '*', label = 'QbA - аналитически')
+plt.plot(Vgb, np.abs(Qb), '-', color = 'r', label = 'Qb - численно')
+plt.axvline(x = Vfb, color = 'green', label = 'Vfb')
+plt.semilogy()
+plt.legend()
 plt.show()
 
 plt.xlabel("Vgb, В")
@@ -289,7 +262,7 @@ plt.show()
 plt.xlabel("Vgb, В")
 plt.ylabel("Ошибка, %")
 plt.title('Заряд в толще проводника')
-plt.plot(Vgb, np.abs(100 * ((QbA(fisss) - Qb) / (QbA(fisss)))));
+plt.plot(Vgb, np.abs(100 * ((QbA(Ψs) - Qb) / (QbA(Ψs)))))
 plt.axvline(x=Vfb,color='green', label = 'Vfb')
 plt.semilogy()
 plt.show()
@@ -297,40 +270,35 @@ plt.show()
 plt.xlabel("Vgb, В")
 plt.ylabel("Ошибка, %")
 plt.title('Заряд в инверсном слое проводника')
-plt.plot(Vgb, np.abs(100 * (QiA(fisss) - Qi) / (QiA(fisss)+1e-12)))
+plt.plot(Vgb, np.abs(100 * (QiA(Ψs) - Qi) / (QiA(Ψs)+1e-12)))
 plt.axvline(x=Vfb,color='green', label = 'Vfb')
 plt.semilogy()
 plt.show()
 
 # Пункт 3
 Vgb = np.linspace(SPE(Ev[T300] - F[T300] - 0.181, 0), SPE(Ec[T300] - F[T300] + 0.28, 0), 84736)
-fisss = np.array([])
+Ψs = np.array([])
 # anew = Ev[T300]-F[T300]-0.181
 # bnew=Ec[T300]-F[T300]+0.28
 for val in Vgb:
-   fisss = np.hstack((fisss, bisect(f=SPE,a=Ev[T300]-F[T300]-0.181,b=Ec[T300]-F[T300]+0.28, args=val, xtol=1e-12)))
+   Ψs = np.hstack((Ψs, bisect(f=SPE,a=Ev[T300]-F[T300]-0.181,b=Ec[T300]-F[T300]+0.28, args=val, xtol=1e-12)))
 
-fsFunc = lambda fis: (0.026*p[T300]*(np.exp(-(fis / 0.026)) - 1)) + (0.026*n[T300]*(np.exp(fis/0.026) - 1)) + (fis * (na1[T300]+na2[T300]))
-
-fisArray = np.arange(-0.3, 0.3, 0.0078125 * (0.3/T_range.size))
-fs = fsFunc(fisArray)
+Ψs_range = np.arange(-0.3, 0.3, 0.0078125 * (0.3/T_range.size))
+fs = f_Ψs(Ψs_range)
 
 # Оценка потенциалов слабой и сильной инверсии
 phi_WI = 0.026 * mth.log(ni[T300]/n[T300])
 phi_SI = 0.026 * mth.log((Na1+Na2)/n[T300])
 print(phi_WI, ' для слабой инверсии и ', phi_SI, ' для сильной инверсии')
 
-# Возможно ошибка в том, что я строю заряд в кулонах, температуру в Кельвинах, а постоянная больцмана в эВ
 Cs0 = np.sqrt(((qpos*eps * eps0) / (k*300)) * (p[T300] + n[T300]))
-df = lambda fisss: (Na2+Na1) - p[T300] * np.exp(-fisss / 0.026) + n[T300] * np.exp(fisss / 0.026)
-Cs = lambda fisss: np.sign(fisss) * df(fisss) * np.sqrt((qpos*eps*eps0)/(2*fs+Ifis(fisss))) + Cs0
-Cgb = Cs(fisss) * Coxp / (Cs(fisss) + Coxp)
-#Cgb0 = (Cs0 * Coxp) / (Cs0 + Coxp)
+df = lambda Ψs: (Na2+Na1) - p[T300] * np.exp(-Ψs / 0.026) + n[T300] * np.exp(Ψs / 0.026)
+Cs = lambda Ψs: np.sign(Ψs) * df(Ψs) * np.sqrt((qpos*eps*eps0)/(2*fs+I_Ψs(Ψs))) + Cs0
+Cgb = Cs(Ψs) * Coxp / (Cs(Ψs) + Coxp)
 
-Cgb0 = np.array([])
 Cgb0 = np.zeros(84736)
-for iii in range(84736):
-        Cgb0[iii] = (Cs0 * Coxp) / (Cs0 + Coxp)
+for i in range(84736):
+    Cgb0[i] = (Cs0 * Coxp) / (Cs0 + Coxp)
 
 
 plt.xlabel("Vgb, В")
@@ -344,35 +312,29 @@ plt.ylim(0,1.1)
 plt.show()
 
 Vgb = np.linspace(SPE(Ev[T300]-F[T300]-0.181,0),SPE(Ec[T300]-F[T300]+0.28,0),331)
-fisss = np.array([])
+Ψs = np.array([])
 # anew = Ev[T300] - F[T300] - 0.181
 # bnew=Ec[T300]-F[T300]+0.28
 for val in Vgb:
-    fisss = np.hstack((fisss, bisect(f=SPE,a=Ev[T300] - F[T300] - 0.181,b=Ec[T300]-F[T300]+0.28, args=val, xtol=1e-12)))
+    Ψs = np.hstack((Ψs, bisect(f=SPE,a=Ev[T300] - F[T300] - 0.181,b=Ec[T300]-F[T300]+0.28, args=val, xtol=1e-12)))
 
-fsFunc = lambda fis: (0.026*p[T300]*(np.exp(-(fis / 0.026)) - 1)) + (0.026*n[T300]*(np.exp(fis/0.026) - 1)) + (fis * (na1[T300]+na2[T300]))
-fisArray = np.arange(-0.3, 0.3, 2 * (0.3 / T_range.size))
-fs = fsFunc(fisArray)
+Ψs_range = np.arange(-0.3, 0.3, 2 * (0.3 / T_range.size))
+fs = f_Ψs(Ψs_range)
 
 #Пункт 4
-Ci = lambda fis: qpos*(nfis(fis)-n[T300])/Efis(fis)
-Cb = lambda fis: -qpos*(pfis(fis)-p[T300])/Efis(fis)
+Ci = lambda Ψs: qpos*(n_Ψs(Ψs)-n[T300])/E_Ψs(Ψs)
+Cb = lambda Ψs: -qpos*(p_Ψs(Ψs)-p[T300])/E_Ψs(Ψs)
 
-Cb0 = np.sign(fisss)*np.sqrt((qpos*eps*eps0*p[T300])*(0.026))
-Ci0 = np.sign(fisss)*np.sqrt((qpos*eps*eps0*n[T300])*(0.026))
-
-Ci_mas = np.zeros(331)
-for i in range(0,331):
-    Ci_mas[i] = Ci(fisss[i])
-Cb_mas = np.zeros(331)
-for i in range(0,331):
-    Cb_mas[i] = Cb(fisss[i]) 
+Cb0 = np.sign(Ψs)*np.sqrt((qpos*eps*eps0*p[T300])*(0.026))
+Ci0 = np.sign(Ψs)*np.sqrt((qpos*eps*eps0*n[T300])*(0.026))
 
 plt.xlabel("Vgb, В")
 plt.ylabel("C, Ф/см^2")
 plt.title('Емкости')
-plt.plot(Vgb, Ci_mas + Cb_mas, 'x', label = "Cs")
-plt.plot(Vgb, Ci_mas, label = "Ci")
-plt.plot(Vgb, Cb_mas, label = "Cb")
+plt.plot(Vgb, Ci(Ψs) + Cb(Ψs), 'x', label = "Cs")
+plt.plot(Vgb, Ci(Ψs), label = "Ci")
+plt.plot(Vgb, Cb(Ψs), label = "Cb")
 plt.axvline(x=Vfb,color='red', label = 'Vfb')
 plt.show()
+
+print('{---------------------------------Четвертая часть------------------------------------------}')
