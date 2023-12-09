@@ -328,318 +328,336 @@ integral = lambda Ψs: 1 / E_Ψs(Ψs)
 def YCoordCompute(Ψs):
     if (Ψs == 0): 
         return np.linspace(0, 150, 101) * 1e-7, Ψs 
-    fis1 = np.linspace(Ψs, Ψs * 0.5, 21) 
-    fis2 = np.logspace(np.log10(np.abs(Ψs * 0.5)), np.log10(np.abs(Ψs * 1e-3)), 101)
+    Ψs1 = np.linspace(Ψs, Ψs * 0.5, 21) 
+    Ψs2 = np.logspace(np.log10(np.abs(Ψs * 0.5)), np.log10(np.abs(Ψs * 1e-3)), 101)
     if (Ψs < 0):
-        fis2 = -1 * fis2
-    fis = np.hstack((fis1, fis2[1:]))
+        Ψs2 = -1 * Ψs2
+    fis = np.hstack((Ψs1, Ψs2[1:]))
     y = np.array([])
     for value in fis:
-        YTemporal, error = quad(integral, value, Ψs)
+        YTemporal = quad(integral, value, Ψs)[0]
         y = np.hstack((y, YTemporal))
     return y, fis
 
-newFis = (Ev[T300] - F[T300]) 
-Vgb_new = SPE(newFis, 0)
-FisOx = Vgb_new - newFis - Vfb
+Ψs = (Ev[T300] - F[T300]) 
+Vgb = SPE(Ψs, 0)
+Ψsox = Vgb - Ψs - Vfb
 
-y, newFisExtra = YCoordCompute(newFis)
+y, ΨsExtra = YCoordCompute(Ψs)
 y = y / 100 * 1e9
 toxnm = tox / 100 * 1e9
 
-nNew = n[T300] * np.exp(newFisExtra / 0.026)
-pNnew = p[T300] * np.exp(-newFisExtra / 0.026)
+nNew = n[T300] * np.exp(ΨsExtra / 0.026)
+pNnew = p[T300] * np.exp(-ΨsExtra / 0.026)
 QEqZero = pNnew - nNew - Na1 - Na2
 
 # для зонной диаграммы  
 plt.title('Зонная диаграмма(обогащение)')
-plt.legend(loc = 'best', prop = {'size': 16})
-plt.xlabel('x (нм)', fontsize = 14)
-plt.ylabel('Энергия , эВ', fontsize = 14)
+plt.legend(loc = 'best')
+plt.xlabel('x (нм)')
+plt.ylabel('Энергия , эВ')
 # зонная диаграмма п\п
-plt.plot(y, Ev[T300] - newFisExtra, 'b', label = "Ev")
-plt.plot(y, Es[T300] - newFisExtra, 'g--', label = "Ei")
-plt.plot(y, Ec[T300] - newFisExtra, 'orange', label = "Ec")
+plt.plot(y, Ev[T300] - ΨsExtra, 'b', label = "Ev")
+plt.plot(y, Es[T300] - ΨsExtra, 'g--', label = "Ei")
+plt.plot(y, Ec[T300] - ΨsExtra, 'orange', label = "Ec")
 # уровень ферми
 plt.plot(y, 0 * y + F[T300], 'k',  label = "F")
 #диаграмма оксида
-plt.plot([0, 0], [Ev[T300] - newFis - VBO, Ec[T300] - newFis + CBO], 'r')
-plt.plot([-toxnm, -toxnm], [Ev[T300] - newFis - VBO - FisOx, Ec[T300] - newFis + CBO - FisOx],  'r')
-plt.plot([-toxnm, 0], [Ev[T300] - newFis - VBO - FisOx, Ev[T300] - newFis - VBO], 'r')
-plt.plot([-toxnm, 0], [Ec[T300] - newFis + CBO - FisOx, Ec[T300] - newFis + CBO], 'r')
+plt.plot([0, 0], [Ev[T300] - Ψs - VBO, Ec[T300] - Ψs + CBO], 'r')
+plt.plot([-toxnm, -toxnm], [Ev[T300] - Ψs - VBO - Ψsox, Ec[T300] - Ψs + CBO - Ψsox],  'r')
+plt.plot([-toxnm, 0], [Ev[T300] - Ψs - VBO - Ψsox, Ev[T300] - Ψs - VBO], 'r')
+plt.plot([-toxnm, 0], [Ec[T300] - Ψs + CBO - Ψsox, Ec[T300] - Ψs + CBO], 'r')
 # уровень ферми метала
-plt.plot([-toxnm - 100, -toxnm], [F[T300] - Vfb - newFis - FisOx, F[T300] - Vfb - newFis - FisOx], 'k')
+plt.plot([-toxnm - 100, -toxnm], [F[T300] - Vfb - Ψs - Ψsox, F[T300] - Vfb - Ψs - Ψsox], 'k')
 plt.show()
 
 plt.title('Концентрации(обогащение)')
-plt.xlabel('x (нм)', fontsize = 14)
-plt.ylabel('(1 / см$^3$)', fontsize = 14)
-plt.semilogy(y, nNew, label = 'n', linewidth = 2)
-plt.semilogy(y, pNnew, label = 'p', linewidth = 2)
+plt.xlabel('x (нм)')
+plt.ylabel('(1 / см$^3$)')
+plt.semilogy(y, nNew, label = 'n')
+plt.semilogy(y, pNnew, label = 'p')
 plt.semilogy(y, Na1 + Na2 + 0 * y, label = 'Na')
-plt.legend(loc = 'best', prop = {'size': 16})
+plt.legend(loc = 'best')
 plt.show()
 
 plt.title('Объемный заряд(обогащение)')
-plt.xlabel('x (нм)', fontsize = 14)
-plt.ylabel('$|\\rho/q|$ (1 / см$^3$)', fontsize = 16)
+plt.xlabel('x (нм)')
+plt.ylabel('$|\\rho/q|$ (1 / см$^3$)')
 plt.semilogy(y, np.abs(QEqZero), label = '$\\rho/q$')
 plt.show()
 
-newFis = 0
-Vgb_new=SPE(newFis,0)
-FisOx = Vgb_new - newFis - Vfb
+Ψs = 0
+Vgb = SPE(Ψs, 0)
+Ψsox = Vgb - Ψs - Vfb
+y, ΨsExtra = YCoordCompute(Ψs)
+y = y / 100 * 1e9
 
-newFisExtra = np.zeros(101)
-nNew = n[T300] * np.exp(newFisExtra / 0.026)
-pNnew = p[T300] * np.exp(-newFisExtra / 0.026)
+ΨsExtra = np.zeros(101)
+nNew = n[T300] * np.exp(ΨsExtra / 0.026)
+pNnew = p[T300] * np.exp(-ΨsExtra / 0.026)
 QEqZero = pNnew - nNew - Na1 - Na2
 
 plt.title('Зонная диаграмма(плоские зоны)')
-plt.legend(loc = 'best', prop = {'size': 16})
-plt.xlabel('x (нм)', fontsize = 14)
-plt.ylabel('Энергия , эВ', fontsize = 14)
+plt.legend(loc = 'best')
+plt.xlabel('x (нм)')
+plt.ylabel('Энергия , эВ')
 # зонная диаграмма п\п
-plt.plot(y, Ev[T300] - newFisExtra, 'b', label = "Ev")
-plt.plot(y, Es[T300] - newFisExtra, 'g--', label = "Ei")
-plt.plot(y, Ec[T300] - newFisExtra, 'orange', label = "Ec")
+plt.plot(y, Ev[T300] - ΨsExtra, 'b', label = "Ev")
+plt.plot(y, Es[T300] - ΨsExtra, 'g--', label = "Ei")
+plt.plot(y, Ec[T300] - ΨsExtra, 'orange', label = "Ec")
 # уровень ферми
 plt.plot(y, 0 * y + F[T300], 'k',  label = "F")
 #диаграмма оксида
-plt.plot([0, 0], [Ev[T300] - newFis - VBO, Ec[T300] - newFis + CBO], 'r')
-plt.plot([-toxnm, -toxnm], [Ev[T300] - newFis - VBO - FisOx, Ec[T300] - newFis + CBO - FisOx],  'r')
-plt.plot([-toxnm, 0], [Ev[T300] - newFis - VBO - FisOx, Ev[T300] - newFis - VBO], 'r')
-plt.plot([-toxnm, 0], [Ec[T300] - newFis + CBO - FisOx, Ec[T300] - newFis + CBO], 'r')
+plt.plot([0, 0], [Ev[T300] - Ψs - VBO, Ec[T300] - Ψs + CBO], 'r')
+plt.plot([-toxnm, -toxnm], [Ev[T300] - Ψs - VBO - Ψsox, Ec[T300] - Ψs + CBO - Ψsox],  'r')
+plt.plot([-toxnm, 0], [Ev[T300] - Ψs - VBO - Ψsox, Ev[T300] - Ψs - VBO], 'r')
+plt.plot([-toxnm, 0], [Ec[T300] - Ψs + CBO - Ψsox, Ec[T300] - Ψs + CBO], 'r')
 # уровень ферми метала
-plt.plot([-toxnm - 10, -toxnm], [F[T300] - Vfb - newFis - FisOx, F[T300] - Vfb - newFis - FisOx], 'k')
+plt.plot([-toxnm - 10, -toxnm], [F[T300] - Vfb - Ψs - Ψsox, F[T300] - Vfb - Ψs - Ψsox], 'k')
 plt.show()
 
 plt.title('Концентрации(плоские зоны)')
-plt.xlabel('x (нм)', fontsize = 14)
-plt.ylabel('(1 / см$^3$)', fontsize = 14)
-plt.semilogy(y, nNew, label = 'n', linewidth = 2)
-plt.semilogy(y, pNnew, label = 'p', linewidth = 2)
+plt.xlabel('x (нм)')
+plt.ylabel('(1 / см$^3$)')
+plt.semilogy(y, nNew, label = 'n')
+plt.semilogy(y, pNnew, label = 'p')
 plt.semilogy(y, Na1 + Na2 + 0 * y, label = 'Na')
-plt.legend(loc = 'best', prop = {'size': 16})
+plt.legend(loc = 'best')
 plt.show()
 
 plt.title('Объемный заряд(плоские зоны)')
-plt.xlabel('x (нм)', fontsize = 14)
-plt.ylabel('$|\\rho/q|$ (1 / см$^3$)', fontsize = 16)
+plt.xlabel('x (нм)')
+plt.ylabel('$|\\rho/q|$ (1 / см$^3$)')
 plt.semilogy(y, np.abs(QEqZero), label = '$\\rho/q$')
 plt.legend()
 plt.show()
 
-newFis = Es[T300] - F[T300]  
-Vgb_new=SPE(newFis, 0)
-FisOx = Vgb_new - newFis - Vfb
+Ψs = Es[T300] - F[T300]  
+Vgb = SPE(Ψs, 0)
+Ψsox = Vgb - Ψs - Vfb
 
-nNew = n[T300] * np.exp(newFisExtra / 0.026)
-pNnew = p[T300] * np.exp(-newFisExtra / 0.026)
+y, ΨsExtra = YCoordCompute(Ψs)
+y = y / 100 * 1e9
+
+nNew = n[T300] * np.exp(ΨsExtra / 0.026)
+pNnew = p[T300] * np.exp(-ΨsExtra / 0.026)
 QEqZero = pNnew - nNew - Na1 - Na2
 
 plt.title('Зонная диаграмма(слабая инверсия)')
-plt.legend(loc = 'best', prop = {'size': 16})
-plt.xlabel('x (нм)', fontsize = 14)
-plt.ylabel('Энергия , эВ', fontsize = 14)
+plt.legend(loc = 'best')
+plt.xlabel('x (нм)')
+plt.ylabel('Энергия , эВ')
 # зонная диаграмма п\п
-plt.plot(y, Ev[T300] - newFisExtra, 'b', label = "Ev")
-plt.plot(y, Es[T300] - newFisExtra, 'g--', label = "Ei")
-plt.plot(y, Ec[T300] - newFisExtra, 'orange', label = "Ec")
+plt.plot(y, Ev[T300] - ΨsExtra, 'b', label = "Ev")
+plt.plot(y, Es[T300] - ΨsExtra, 'g--', label = "Ei")
+plt.plot(y, Ec[T300] - ΨsExtra, 'orange', label = "Ec")
 # уровень ферми
 plt.plot(y, 0 * y + F[T300], 'k',  label = "F")
 #диаграмма оксида
-plt.plot([0, 0], [Ev[T300] - newFis - VBO, Ec[T300] - newFis + CBO], 'r')
-plt.plot([-toxnm, -toxnm], [Ev[T300] - newFis - VBO - FisOx, Ec[T300] - newFis + CBO - FisOx],  'r')
-plt.plot([-toxnm, 0], [Ev[T300] - newFis - VBO - FisOx, Ev[T300] - newFis - VBO], 'r')
-plt.plot([-toxnm, 0], [Ec[T300] - newFis + CBO - FisOx, Ec[T300] - newFis + CBO], 'r')
+plt.plot([0, 0], [Ev[T300] - Ψs - VBO, Ec[T300] - Ψs + CBO], 'r')
+plt.plot([-toxnm, -toxnm], [Ev[T300] - Ψs - VBO - Ψsox, Ec[T300] - Ψs + CBO - Ψsox],  'r')
+plt.plot([-toxnm, 0], [Ev[T300] - Ψs - VBO - Ψsox, Ev[T300] - Ψs - VBO], 'r')
+plt.plot([-toxnm, 0], [Ec[T300] - Ψs + CBO - Ψsox, Ec[T300] - Ψs + CBO], 'r')
 # уровень ферми метала
-plt.plot([-toxnm - 10, -toxnm], [F[T300] - Vfb - newFis - FisOx, F[T300] - Vfb - newFis - FisOx], 'k')
+plt.plot([-toxnm - 10, -toxnm], [F[T300] - Vfb - Ψs - Ψsox, F[T300] - Vfb - Ψs - Ψsox], 'k')
 plt.show()
 
 plt.title('Концентрации(слабая инверсия)')
-plt.xlabel('x (нм)', fontsize = 14)
-plt.ylabel('(1 / см$^3$)', fontsize = 14)
-plt.semilogy(y, nNew, label = 'n', linewidth = 2)
-plt.semilogy(y, pNnew, label = 'p', linewidth = 2)
+plt.xlabel('x (нм)')
+plt.ylabel('(1 / см$^3$)')
+plt.semilogy(y, nNew, label = 'n')
+plt.semilogy(y, pNnew, label = 'p')
 plt.semilogy(y, Na1 + Na2 + 0 * y, label = 'Na')
-plt.legend(loc = 'best', prop = {'size': 16})
+plt.legend(loc = 'best')
 plt.show()
 
 plt.title('Объемный заряд(слабая инверсия)')
-plt.xlabel('x (нм)', fontsize = 14)
-plt.ylabel('$|\\rho/q|$ (1 / см$^3$)', fontsize = 16)
+plt.xlabel('x (нм)')
+plt.ylabel('$|\\rho/q|$ (1 / см$^3$)')
 plt.semilogy(y, np.abs(QEqZero), label = '$\\rho/q$')
 plt.legend()
 plt.show()
 
-newFis = (Es[T300] - F[T300]) * 2  
-Vgb_new=SPE(newFis, 0)
-FisOx = Vgb_new - newFis - Vfb
+Ψs = (Es[T300] - F[T300]) * 2  
+Vgb = SPE(Ψs, 0)
+Ψsox = Vgb - Ψs - Vfb
 
-nNew = n[T300] * np.exp(newFisExtra / 0.026)
-pNnew = p[T300] * np.exp(-newFisExtra / 0.026)
+y, ΨsExtra = YCoordCompute(Ψs)
+y = y / 100 * 1e9
+
+
+nNew = n[T300] * np.exp(ΨsExtra / 0.026)
+pNnew = p[T300] * np.exp(-ΨsExtra / 0.026)
 QEqZero = pNnew - nNew - Na1 - Na2
 
 plt.title('Зонная диаграмма(сильная инверсия)')
-plt.legend(loc = 'best', prop = {'size': 16})
-plt.xlabel('x (нм)', fontsize = 14)
-plt.ylabel('Энергия , эВ', fontsize = 14)
+plt.legend(loc = 'best')
+plt.xlabel('x (нм)')
+plt.ylabel('Энергия , эВ')
 # зонная диаграмма п\п
-plt.plot(y, Ev[T300] - newFisExtra, 'b', label = "Ev")
-plt.plot(y, Es[T300] - newFisExtra, 'g--', label = "Ei")
-plt.plot(y, Ec[T300] - newFisExtra, 'orange', label = "Ec")
+plt.plot(y, Ev[T300] - ΨsExtra, 'b', label = "Ev")
+plt.plot(y, Es[T300] - ΨsExtra, 'g--', label = "Ei")
+plt.plot(y, Ec[T300] - ΨsExtra, 'orange', label = "Ec")
 # уровень ферми
 plt.plot(y, 0 * y + F[T300], 'k',  label = "F")
 #диаграмма оксида
-plt.plot([0, 0], [Ev[T300] - newFis - VBO, Ec[T300] - newFis + CBO], 'r')
-plt.plot([-toxnm, -toxnm], [Ev[T300] - newFis - VBO - FisOx, Ec[T300] - newFis + CBO - FisOx],  'r')
-plt.plot([-toxnm, 0], [Ev[T300] - newFis - VBO - FisOx, Ev[T300] - newFis - VBO], 'r')
-plt.plot([-toxnm, 0], [Ec[T300] - newFis + CBO - FisOx, Ec[T300] - newFis + CBO], 'r')
+plt.plot([0, 0], [Ev[T300] - Ψs - VBO, Ec[T300] - Ψs + CBO], 'r')
+plt.plot([-toxnm, -toxnm], [Ev[T300] - Ψs - VBO - Ψsox, Ec[T300] - Ψs + CBO - Ψsox],  'r')
+plt.plot([-toxnm, 0], [Ev[T300] - Ψs - VBO - Ψsox, Ev[T300] - Ψs - VBO], 'r')
+plt.plot([-toxnm, 0], [Ec[T300] - Ψs + CBO - Ψsox, Ec[T300] - Ψs + CBO], 'r')
 # уровень ферми метала
-plt.plot([-toxnm - 10, -toxnm], [F[T300] - Vfb - newFis - FisOx, F[T300] - Vfb - newFis - FisOx], 'k')
+plt.plot([-toxnm - 10, -toxnm], [F[T300] - Vfb - Ψs - Ψsox, F[T300] - Vfb - Ψs - Ψsox], 'k')
 plt.show()
 
 plt.title('Концентрации(сильная инверсия)')
-plt.xlabel('x (нм)', fontsize = 14)
-plt.ylabel('(1 / см$^3$)', fontsize = 14)
-plt.semilogy(y, nNew, label = 'n', linewidth = 2)
-plt.semilogy(y, pNnew, label = 'p', linewidth = 2)
+plt.xlabel('x (нм)')
+plt.ylabel('(1 / см$^3$)')
+plt.semilogy(y, nNew, label = 'n')
+plt.semilogy(y, pNnew, label = 'p')
 plt.semilogy(y, Na1 + Na2 + 0 * y, label = 'Na')
-plt.legend(loc = 'best', prop = {'size': 16})
+plt.legend(loc = 'best')
 plt.show()
 
 plt.title('Объемный заряд(сильная инверсия)')
-plt.xlabel('x (нм)', fontsize = 14)
-plt.ylabel('$|\\rho/q|$ (1 / см$^3$)', fontsize = 16)
+plt.xlabel('x (нм)')
+plt.ylabel('$|\\rho/q|$ (1 / см$^3$)')
 plt.semilogy(y, np.abs(QEqZero), label = '$\\rho/q$')
 plt.legend()
 plt.show()
 
-newFis = (Es[T300] - F[T300]) * 2 + 3 * 0.026 
-Vgb_new=SPE(newFis, 0)
-FisOx = Vgb_new - newFis - Vfb
+Ψs = (Es[T300] - F[T300]) * 2 + 3 * 0.026 
+Vgb = SPE(Ψs, 0)
+Ψsox = Vgb - Ψs - Vfb
 
-nNew = n[T300] * np.exp(newFisExtra / 0.026)
-pNnew = p[T300] * np.exp(-newFisExtra / 0.026)
+y, ΨsExtra = YCoordCompute(Ψs)
+y = y / 100 * 1e9
+
+nNew = n[T300] * np.exp(ΨsExtra / 0.026)
+pNnew = p[T300] * np.exp(-ΨsExtra / 0.026)
 QEqZero = pNnew - nNew - Na1 - Na2
 
 plt.title('Зонная диаграмма(более сильная инверсия)')
-plt.legend(loc = 'best', prop = {'size': 16})
-plt.xlabel('x (нм)', fontsize = 14)
-plt.ylabel('Энергия , эВ', fontsize = 14)
+plt.legend(loc = 'best')
+plt.xlabel('x (нм)')
+plt.ylabel('Энергия , эВ')
 # зонная диаграмма п\п
-plt.plot(y, Ev[T300] - newFisExtra, 'b', label = "Ev")
-plt.plot(y, Es[T300] - newFisExtra, 'g--', label = "Ei")
-plt.plot(y, Ec[T300] - newFisExtra, 'orange', label = "Ec")
+plt.plot(y, Ev[T300] - ΨsExtra, 'b', label = "Ev")
+plt.plot(y, Es[T300] - ΨsExtra, 'g--', label = "Ei")
+plt.plot(y, Ec[T300] - ΨsExtra, 'orange', label = "Ec")
 # уровень ферми
 plt.plot(y, 0 * y + F[T300], 'k',  label = "F")
 #диаграмма оксида
-plt.plot([0, 0], [Ev[T300] - newFis - VBO, Ec[T300] - newFis + CBO], 'r')
-plt.plot([-toxnm, -toxnm], [Ev[T300] - newFis - VBO - FisOx, Ec[T300] - newFis + CBO - FisOx],  'r')
-plt.plot([-toxnm, 0], [Ev[T300] - newFis - VBO - FisOx, Ev[T300] - newFis - VBO], 'r')
-plt.plot([-toxnm, 0], [Ec[T300] - newFis + CBO - FisOx, Ec[T300] - newFis + CBO], 'r')
+plt.plot([0, 0], [Ev[T300] - Ψs - VBO, Ec[T300] - Ψs + CBO], 'r')
+plt.plot([-toxnm, -toxnm], [Ev[T300] - Ψs - VBO - Ψsox, Ec[T300] - Ψs + CBO - Ψsox],  'r')
+plt.plot([-toxnm, 0], [Ev[T300] - Ψs - VBO - Ψsox, Ev[T300] - Ψs - VBO], 'r')
+plt.plot([-toxnm, 0], [Ec[T300] - Ψs + CBO - Ψsox, Ec[T300] - Ψs + CBO], 'r')
 # уровень ферми метала
-plt.plot([-toxnm - 10, -toxnm], [F[T300] - Vfb - newFis - FisOx, F[T300] - Vfb - newFis - FisOx], 'k')
+plt.plot([-toxnm - 10, -toxnm], [F[T300] - Vfb - Ψs - Ψsox, F[T300] - Vfb - Ψs - Ψsox], 'k')
 plt.show()
 
 plt.title('Концентрации(более сильная инверсия)')
-plt.xlabel('x (нм)', fontsize = 14)
-plt.ylabel('(1 / см$^3$)', fontsize = 14)
-plt.semilogy(y, nNew, label = 'n', linewidth = 2)
-plt.semilogy(y, pNnew, label = 'p', linewidth = 2)
+plt.xlabel('x (нм)')
+plt.ylabel('(1 / см$^3$)')
+plt.semilogy(y, nNew, label = 'n')
+plt.semilogy(y, pNnew, label = 'p')
 plt.semilogy(y, Na1 + Na2 + 0 * y, label = 'Na')
-plt.legend(loc = 'best', prop = {'size': 16})
+plt.legend(loc = 'best')
 plt.show()
 
 plt.title('Объемный заряд(более сильная инверсия)')
-plt.xlabel('x (нм)', fontsize = 14)
-plt.ylabel('$|\\rho/q|$ (1 / см$^3$)', fontsize = 16)
+plt.xlabel('x (нм)')
+plt.ylabel('$|\\rho/q|$ (1 / см$^3$)')
 plt.semilogy(y, np.abs(QEqZero), label = '$\\rho/q$')
 plt.legend()
 plt.show()
 
-newFis = Ec[T300] - F[T300]
-Vgb_new=SPE(newFis, 0)
-FisOx = Vgb_new - newFis - Vfb
+Ψs = Ec[T300] - F[T300]
+Vgb = SPE(Ψs, 0)
+Ψsox = Vgb - Ψs - Vfb
 
-nNew = n[T300] * np.exp(newFisExtra / 0.026)
-pNnew = p[T300] * np.exp(-newFisExtra / 0.026)
+y, ΨsExtra = YCoordCompute(Ψs)
+y = y / 100 * 1e9
+
+nNew = n[T300] * np.exp(ΨsExtra / 0.026)
+pNnew = p[T300] * np.exp(-ΨsExtra / 0.026)
 QEqZero = pNnew - nNew - Na1 - Na2
 
 plt.title('Зонная диаграмма(очень сильная инверсия)')
-plt.legend(loc = 'best', prop = {'size': 16})
-plt.xlabel('x (нм)', fontsize = 14)
-plt.ylabel('Энергия , эВ', fontsize = 14)
+plt.legend(loc = 'best')
+plt.xlabel('x (нм)')
+plt.ylabel('Энергия , эВ')
 # зонная диаграмма п\п
-plt.plot(y, Ev[T300] - newFisExtra, 'b', label = "Ev")
-plt.plot(y, Es[T300] - newFisExtra, 'g--', label = "Ei")
-plt.plot(y, Ec[T300] - newFisExtra, 'orange', label = "Ec")
+plt.plot(y, Ev[T300] - ΨsExtra, 'b', label = "Ev")
+plt.plot(y, Es[T300] - ΨsExtra, 'g--', label = "Ei")
+plt.plot(y, Ec[T300] - ΨsExtra, 'orange', label = "Ec")
 # уровень ферми
 plt.plot(y, 0 * y + F[T300], 'k',  label = "F")
 #диаграмма оксида
-plt.plot([0, 0], [Ev[T300] - newFis - VBO, Ec[T300] - newFis + CBO], 'r')
-plt.plot([-toxnm, -toxnm], [Ev[T300] - newFis - VBO - FisOx, Ec[T300] - newFis + CBO - FisOx],  'r')
-plt.plot([-toxnm, 0], [Ev[T300] - newFis - VBO - FisOx, Ev[T300] - newFis - VBO], 'r')
-plt.plot([-toxnm, 0], [Ec[T300] - newFis + CBO - FisOx, Ec[T300] - newFis + CBO], 'r')
+plt.plot([0, 0], [Ev[T300] - Ψs - VBO, Ec[T300] - Ψs + CBO], 'r')
+plt.plot([-toxnm, -toxnm], [Ev[T300] - Ψs - VBO - Ψsox, Ec[T300] - Ψs + CBO - Ψsox],  'r')
+plt.plot([-toxnm, 0], [Ev[T300] - Ψs - VBO - Ψsox, Ev[T300] - Ψs - VBO], 'r')
+plt.plot([-toxnm, 0], [Ec[T300] - Ψs + CBO - Ψsox, Ec[T300] - Ψs + CBO], 'r')
 # уровень ферми метала
-plt.plot([-toxnm - 1000, -toxnm], [F[T300] - Vfb - newFis - FisOx, F[T300] - Vfb - newFis - FisOx], 'k')
+plt.plot([-toxnm - 1000, -toxnm], [F[T300] - Vfb - Ψs - Ψsox, F[T300] - Vfb - Ψs - Ψsox], 'k')
 plt.show()
 
 plt.title('Концентрации(очень сильная инверсия)')
-plt.xlabel('x (нм)', fontsize = 14)
-plt.ylabel('(1 / см$^3$)', fontsize = 14)
-plt.semilogy(y, nNew, label = 'n', linewidth = 2)
-plt.semilogy(y, pNnew, label = 'p', linewidth = 2)
+plt.xlabel('x (нм)')
+plt.ylabel('(1 / см$^3$)')
+plt.semilogy(y, nNew, label = 'n')
+plt.semilogy(y, pNnew, label = 'p')
 plt.semilogy(y, Na1 + Na2 + 0 * y, label = 'Na')
-plt.legend(loc = 'best', prop = {'size': 16})
+plt.legend(loc = 'best')
 plt.show()
 
 plt.title('Объемный заряд(очень сильная инверсия)')
-plt.xlabel('x (нм)', fontsize = 14)
-plt.ylabel('$|\\rho/q|$ (1 / см$^3$)', fontsize = 16)
+plt.xlabel('x (нм)')
+plt.ylabel('$|\\rho/q|$ (1 / см$^3$)')
 plt.semilogy(y, np.abs(QEqZero), label = '$\\rho/q$')
 plt.legend()
 plt.show()
 
-newFis = bisect(SPE, Ev[T300] - F[T300], Ec[T300] - F[T300], 0)
-Vgb_new=SPE(newFis, 0)
-FisOx = Vgb_new - newFis - Vfb
+Ψs = bisect(SPE, Ev[T300] - F[T300], Ec[T300] - F[T300], 0)
+Vgb = SPE(Ψs, 0)
+Ψsox = Vgb - Ψs - Vfb
 
-nNew = n[T300] * np.exp(newFisExtra / 0.026)
-pNnew = p[T300] * np.exp(-newFisExtra / 0.026)
+y, ΨsExtra = YCoordCompute(Ψs)
+y = y / 100 * 1e9
+
+nNew = n[T300] * np.exp(ΨsExtra / 0.026)
+pNnew = p[T300] * np.exp(-ΨsExtra / 0.026)
 QEqZero = pNnew - nNew - Na1 - Na2
 
 plt.title('Зонная диаграмма(нулевое смещение затвор-подложка)')
-plt.xlabel('x (нм)', fontsize = 14)
-plt.ylabel('Энергия , эВ', fontsize = 14)
-plt.legend(loc = 'best', prop = {'size': 16})
+plt.xlabel('x (нм)')
+plt.ylabel('Энергия , эВ')
+plt.legend(loc = 'best')
 # зонная диаграмма п\п
-plt.plot(y, Ev[T300] - newFisExtra, 'b', label = "Ev")
-plt.plot(y, Es[T300] - newFisExtra, 'g--', label = "Ei")
-plt.plot(y, Ec[T300] - newFisExtra, 'orange', label = "Ec")
+plt.plot(y, Ev[T300] - ΨsExtra, 'b', label = "Ev")
+plt.plot(y, Es[T300] - ΨsExtra, 'g--', label = "Ei")
+plt.plot(y, Ec[T300] - ΨsExtra, 'orange', label = "Ec")
 # уровень ферми
 plt.plot(y, 0 * y + F[T300], 'k',  label = "F")
 #диаграмма оксида
-plt.plot([0, 0], [Ev[T300] - newFis - VBO, Ec[T300] - newFis + CBO], 'r')
-plt.plot([-toxnm, -toxnm],[Ev[T300] - newFis - VBO - FisOx, Ec[T300] - newFis + CBO - FisOx],  'r')
-plt.plot([-toxnm, 0], [Ev[T300] - newFis - VBO - FisOx, Ev[T300] - newFis - VBO], 'r')
-plt.plot([-toxnm, 0], [Ec[T300] - newFis + CBO - FisOx, Ec[T300] - newFis + CBO], 'r')
+plt.plot([0, 0], [Ev[T300] - Ψs - VBO, Ec[T300] - Ψs + CBO], 'r')
+plt.plot([-toxnm, -toxnm],[Ev[T300] - Ψs - VBO - Ψsox, Ec[T300] - Ψs + CBO - Ψsox],  'r')
+plt.plot([-toxnm, 0], [Ev[T300] - Ψs - VBO - Ψsox, Ev[T300] - Ψs - VBO], 'r')
+plt.plot([-toxnm, 0], [Ec[T300] - Ψs + CBO - Ψsox, Ec[T300] - Ψs + CBO], 'r')
 # уровень ферми метала
-plt.plot([-toxnm - 100, -toxnm], [F[T300] - Vfb - newFis - FisOx, F[T300] - Vfb - newFis - FisOx], 'k')
+plt.plot([-toxnm - 100, -toxnm], [F[T300] - Vfb - Ψs - Ψsox, F[T300] - Vfb - Ψs - Ψsox], 'k')
 
 plt.title('Концентрации(нулевое смещение затвор-подложка)')
-plt.xlabel('x (нм)', fontsize = 14)
-plt.ylabel('(1 / см$^3$)', fontsize = 14)
-plt.semilogy(y, nNew, label = 'n', linewidth = 2)
-plt.semilogy(y, pNnew, label = 'p', linewidth = 2)
+plt.xlabel('x (нм)')
+plt.ylabel('(1 / см$^3$)')
+plt.semilogy(y, nNew, label = 'n')
+plt.semilogy(y, pNnew, label = 'p')
 plt.semilogy(y, Na1 + Na2 + 0 * y, label = 'Na')
-plt.legend(loc = 'best', prop = {'size': 16})
+plt.legend(loc = 'best')
 plt.show()
 
 plt.title('Объемный заряд(нулевое смещение затвор-подложка)')
-plt.xlabel('x (нм)', fontsize=14)
-plt.ylabel('$|\\rho/q|$ (1 / см$^3$)', fontsize = 16)
+plt.xlabel('x (нм)')
+plt.ylabel('$|\\rho/q|$ (1 / см$^3$)')
 plt.semilogy(y, np.abs(QEqZero), label = '$\\rho/q$')
 plt.legend()
 plt.show()
